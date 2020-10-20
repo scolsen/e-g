@@ -1,0 +1,299 @@
+<!DOCTYPE HTML>
+
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+        <link rel="stylesheet" href="doc.css">
+    </head>
+    <body>
+        <div class="content">
+            <div class="logo">
+                <a href="Todo">
+                    <img src="">
+                </a>
+                <div class="title">
+                    e-g
+                </div>
+                <div class="index">
+                    <ul>
+                        <li>
+                            <a href="e-g.html">
+                                e-g
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <h1>
+                e-g
+            </h1>
+            <div class="module-description">
+                
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#any">
+                    <h3 id="any">
+                        any
+                    </h3>
+                </a>
+                <div class="description">
+                    doc-stub
+                </div>
+                <p class="sig">
+                    a
+                </p>
+                <span>
+                    
+                </span>
+                <p class="doc">
+                    <p>Helper binding that can refer to a single polymorphic type variable, a.
+An 'example value' of a polymorphic type.
+Can be used to add minimal polymorphism in types defined using e-g:</p>
+<pre><code>(e-g.product (Foo a) (bar 3) (baz (e-g.any)))
+=&gt; (deftype (Foo a) [bar Int baz a])
+</code></pre>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#external">
+                    <h3 id="external">
+                        external
+                    </h3>
+                </a>
+                <div class="description">
+                    macro
+                </div>
+                <p class="sig">
+                    Macro
+                </p>
+                <pre class="args">
+                    (external name args ret)
+                </pre>
+                <p class="doc">
+                    <p>Generates an external function registration based on the types of example argument values and and exmaple return value.
+Takes a function name, a list of example arguments, and an example return value.</p>
+<pre><code>(e-g.external dangerous-repeat (1 (Pointer.from-long 1l)) &quot;blahblah&quot;)
+=&gt; (register dangerous-repeat (Fn [Int (Ptr a)] (Ref String)))
+</code></pre>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#format-type">
+                    <h3 id="format-type">
+                        format-type
+                    </h3>
+                </a>
+                <div class="description">
+                    dynamic
+                </div>
+                <p class="sig">
+                    Dynamic
+                </p>
+                <pre class="args">
+                    (format-type t drop-refs?)
+                </pre>
+                <p class="doc">
+                    <p>Formats a generated type definition to adhere to Carp's type definition rules.</p>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#func-">
+                    <h3 id="func-">
+                        func-
+                    </h3>
+                </a>
+                <div class="description">
+                    dynamic
+                </div>
+                <p class="sig">
+                    Dynamic
+                </p>
+                <pre class="args">
+                    (func- k name args ret)
+                </pre>
+                <p class="doc">
+                    
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#get-type">
+                    <h3 id="get-type">
+                        get-type
+                    </h3>
+                </a>
+                <div class="description">
+                    dynamic
+                </div>
+                <p class="sig">
+                    Dynamic
+                </p>
+                <pre class="args">
+                    (get-type t)
+                </pre>
+                <p class="doc">
+                    <p>Returns the type of an concrete value.</p>
+<pre><code>(e-g.get-type 1)
+=&gt; Int
+</code></pre>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#interface">
+                    <h3 id="interface">
+                        interface
+                    </h3>
+                </a>
+                <div class="description">
+                    macro
+                </div>
+                <p class="sig">
+                    Macro
+                </p>
+                <pre class="args">
+                    (interface name args ret)
+                </pre>
+                <p class="doc">
+                    <p>Generates an interface based on the types of example argument values and and exmaple return value.
+Takes a function name, a list of example arguments, and an example return value.</p>
+<pre><code>(e-g.interface to-string ((e-g.any)) &quot;any&quot;)
+=&gt; (definterface to-string (Fn [a] (Ref String)))
+</code></pre>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#product">
+                    <h3 id="product">
+                        product
+                    </h3>
+                </a>
+                <div class="description">
+                    macro
+                </div>
+                <p class="sig">
+                    Macro
+                </p>
+                <pre class="args">
+                    (product name :rest fields)
+                </pre>
+                <p class="doc">
+                    <p>Generates a product type (struct) using example values for its fields.
+Takes the name of the type to be defined and any number of pairs of field names and example values.
+Automatically drops references from generated types</p>
+<pre><code>(e-g.product Foo (bar 1) (baz \a))
+=&gt; (deftype Foo [bar Int baz Char])
+(e-g.product Foo (bar 1) (baz &quot;foo&quot;))
+=&gt; (deftype Foo [bar Int baz String])
+</code></pre>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#select-from">
+                    <h3 id="select-from">
+                        select-from
+                    </h3>
+                </a>
+                <div class="description">
+                    macro
+                </div>
+                <p class="sig">
+                    Macro
+                </p>
+                <pre class="args">
+                    (select-from ty field)
+                </pre>
+                <p class="doc">
+                    <p>Returns the type of <code>ty</code>s <code>field</code> where ty is a product type
+and field is a field of the type.</p>
+<pre><code>(deftype Player [name String hp Int equipment (Map String Int)])
+(e-g.select-from Player equipment)
+=&gt; (Map String Int)
+(e-g.select-from Pair b)
+=&gt; b
+</code></pre>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#signature">
+                    <h3 id="signature">
+                        signature
+                    </h3>
+                </a>
+                <div class="description">
+                    macro
+                </div>
+                <p class="sig">
+                    Macro
+                </p>
+                <pre class="args">
+                    (signature name args ret)
+                </pre>
+                <p class="doc">
+                    <p>Generates a function signature based on the types of example argument values and and exmaple return value.
+Takes a function name, a list of example arguments, and an example return value.</p>
+<pre><code>(e-g.signature repeat (1 &quot;blah&quot;) &quot;blahblah&quot;)
+(meta repeat &quot;sig&quot;)
+=&gt; (Fn [Int (Ref String)] (Ref String))
+</code></pre>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#sum">
+                    <h3 id="sum">
+                        sum
+                    </h3>
+                </a>
+                <div class="description">
+                    macro
+                </div>
+                <p class="sig">
+                    Macro
+                </p>
+                <pre class="args">
+                    (sum name :rest constructors)
+                </pre>
+                <p class="doc">
+                    <p>Generates a sumtype using example values for its constructors.
+Takes the name of the type to be defined and any number of pairs of constructor names and example values.
+Automatically drops references from examples.</p>
+<pre><code>(e-g.sum TwoIntsOrString (Two-Ints 1 2) (String-Thing &quot;foo&quot;))
+=&gt; (deftype IntOrString (Two-Ints [Int Int]) (String-Thing [String]))
+</code></pre>
+
+                </p>
+            </div>
+            <div class="binder">
+                <a class="anchor" href="#value-of">
+                    <h3 id="value-of">
+                        value-of
+                    </h3>
+                </a>
+                <div class="description">
+                    macro
+                </div>
+                <p class="sig">
+                    Macro
+                </p>
+                <pre class="args">
+                    (value-of ty)
+                </pre>
+                <p class="doc">
+                    <p>Generate a concrete value of the type <code>ty</code>.
+<code>ty</code> must implement zero.</p>
+<pre><code>(e-g.value-of Int)
+=&gt; 0
+</code></pre>
+
+                </p>
+            </div>
+        </div>
+    </body>
+</html>

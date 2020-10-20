@@ -1,0 +1,155 @@
+(defmodule e-g
+  (doc any
+       "Helper binding that can refer to a single polymorphic type variable, a."
+       "An 'example value' of a polymorphic type."
+       "Can be used to add minimal polymorphism in types defined using e-g:"
+       ""
+       "```"
+       "(e-g.product (Foo a) (bar 3) (baz (e-g.any)))"
+       "=> (deftype (Foo a) [bar Int baz a])"
+       "```")
+  (sig any a)
+
+  (doc format-type
+       "Formats a generated type definition to adhere to Carp's type definition rules.")
+  (defndynamic format-type [t drop-refs?]
+    (if (list? t)
+        (cond (= (car t) 'Ref)
+                (if drop-refs?
+                   (cadr (take 2 t))
+                   (take 2 t))
+              (= (car t) 'Fn)
+                (cons-last (e-g.format-type (last (take 3 t)) drop-refs?) (take 2 t))
+              t)
+        t))
+
+  (hidden select-from-struct-fields-)
+  (defndynamic select-from-struct-fields- [field fields]
+    (if (= (car fields) field)
+        (cadr fields)
+        (e-g.select-from-struct-fields- field (cdr fields))))
+
+  (doc select-from
+       "Returns the type of `ty`s `field` where ty is a product type"
+       ("and field is a field of the type." false)
+       ""
+       "```"
+       "(deftype Player [name String hp Int equipment (Map String Int)])"
+       "(e-g.select-from Player equipment)"
+       "=> (Map String Int)"
+       "(e-g.select-from Pair b)"
+       "=> b"
+       "```")
+  (defmacro select-from [ty field]
+    (let [definition (s-expr (eval ty))]
+      (if (Introspect.struct? definition)
+          (e-g.select-from-struct-fields- field (caddr definition))
+          (macro-error (concat ["Unable to select field from type", (str ty)])))))
+
+  (doc value-of
+       "Generate a concrete value of the type `ty`."
+       "`ty` must implement zero."
+       ""
+       "```"
+       "(e-g.value-of Int)"
+       "=> 0"
+       "```")
+  (defmacro value-of [ty]
+    (list (Symbol.prefix (expand ty) 'zero)))
+
+  (doc get-type
+       "Returns the type of an concrete value."
+       ""
+       "```"
+       "(e-g.get-type 1)"
+       "=> Int"
+       "```")
+  (defndynamic get-type [t]
+    (let [ty (eval (list type t))]
+        (if (not (list? ty))
+            (if (and (or (= 'Module ty) (= 'Type ty)) (not (list? ty)))
+                t
+                ty)
+            ty)))
+
+  (hidden collect-)
+  (defndynamic collect- [names types acc]
+    (if (or (empty? names) (empty? types))
+        acc
+        (e-g.collect- (cdr names) (cdr types) (cons-last (car types) (cons-last (car names) acc)))))
+
+  (doc product
+       "Generates a product type (struct) using example values for its fields."
+       "Takes the name of the type to be defined and any number of pairs of field names and example values."
+       "Automatically drops references from generated types"
+       ""
+       "```"
+       "(e-g.product Foo (bar 1) (baz \a))"
+       "=> (deftype Foo [bar Int baz Char])"
+       "(e-g.product Foo (bar 1) (baz \"foo\"))"
+       "=> (deftype Foo [bar Int baz String])"
+       "```")
+  (defmacro product [name :rest fields]
+    (let [name-it (fn [field-value] (car field-value))
+          type-it (fn [field-value] (e-g.format-type (e-g.get-type (cadr field-value)) true))
+          names (map name-it fields)
+          types (map type-it fields)
+          names-types (list-to-array-internal (e-g.collect- names types '()) [])]
+      (list 'deftype name names-types)))
+
+  (doc sum
+       "Generates a sumtype using example values for its constructors."
+       "Takes the name of the type to be defined and any number of pairs of constructor names and example values."
+       "Automatically drops references from examples."
+       ""
+       "```"
+       "(e-g.sum TwoIntsOrString (Two-Ints 1 2) (String-Thing \"foo\"))"
+       "=> (deftype IntOrString (Two-Ints [Int Int]) (String-Thing [String]))"
+       "```")
+  (defmacro sum [name :rest constructors]
+    (let [name-it (fn [field-value] (car field-value))
+          type-it (fn [field-value] (list-to-array-internal (map (fn [x] (e-g.format-type (e-g.get-type x) true)) (cdr field-value)) []))
+          names (map name-it constructors)
+          types (map type-it constructors)
+          names-types (zip (fn [x] x) names types)]
+      (append (list 'deftype name) names-types)))
+
+  (defndynamic func- [k name args ret]
+    (let [arg-types (list-to-array-internal (map (fn [x] (e-g.format-type (e-g.get-type x) false)) args) [])
+          ret-type  (e-g.format-type (e-g.get-type ret) false)]
+      (list k name (list 'Fn arg-types ret-type))))
+
+  (doc signature
+       "Generates a function signature based on the types of example argument values and and exmaple return value."
+       "Takes a function name, a list of example arguments, and an example return value."
+       ""
+       "```"
+       "(e-g.signature repeat (1 \"blah\") \"blahblah\")"
+       "(meta repeat \"sig\")"
+       "=> (Fn [Int (Ref String)] (Ref String))"
+       "```")
+  (defmacro signature [name args ret]
+    (e-g.func- 'sig name args ret))
+
+  (doc interface
+       "Generates an interface based on the types of example argument values and and exmaple return value."
+       "Takes a function name, a list of example arguments, and an example return value."
+       ""
+       "```"
+       "(e-g.interface to-string ((e-g.any)) \"any\")"
+       "=> (definterface to-string (Fn [a] (Ref String)))"
+       "```")
+  (defmacro interface [name args ret]
+    (e-g.func- 'definterface name args ret))
+
+  (doc external
+       "Generates an external function registration based on the types of example argument values and and exmaple return value."
+       "Takes a function name, a list of example arguments, and an example return value."
+       ""
+       "```"
+       "(e-g.external dangerous-repeat (1 (Pointer.from-long 1l)) \"blahblah\")"
+       "=> (register dangerous-repeat (Fn [Int (Ptr a)] (Ref String)))"
+       "```")
+  (defmacro external [name args ret]
+    (e-g.func- 'register name args ret))
+)

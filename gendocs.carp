@@ -1,0 +1,14 @@
+;; Generate documentation for e-g
+
+(load "main.carp")
+
+(Project.config "title" "e-g")
+(Project.config "docs-directory" "doc/")
+(Project.config "docs-styling" "doc.css")
+(Project.config "docs-url" "Todo")
+(Project.config "docs-prelude"
+  "e-g is a library for defining types based on exemplary values.")
+(Project.config "docs-generate-index" true)
+
+(save-docs e-g)
+(quit)
